@@ -217,7 +217,7 @@ vendored upstream checkout. The bump is being proposed upstream so the patch can
 | JVM (macOS arm64 host) | wallet, descriptor, key, mnemonic and error tests pass |
 | macOS arm64 | same suite passes on Kotlin/Native |
 | iOS simulator | same suite passes on CI (macOS runner) |
-| iOS device | builds; runtime verification pending |
+| iOS device | not yet verified |
 | Android | wired up, verification in progress |
 | Maven Central | not yet published |
 
