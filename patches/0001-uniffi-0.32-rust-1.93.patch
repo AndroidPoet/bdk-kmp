@@ -1,0 +1,31 @@
+diff --git a/bdk-ffi/Cargo.toml b/bdk-ffi/Cargo.toml
+index 08664e5..0edecd2 100644
+--- a/bdk-ffi/Cargo.toml
++++ b/bdk-ffi/Cargo.toml
+@@ -20,14 +20,14 @@ bdk_esplora = { version = "0.22.2", default-features = false, features = ["std",
+ bdk_electrum = { version = "0.24.0", default-features = false, features = ["use-rustls-ring"] }
+ bdk_kyoto = { version = "0.17.1" }
+ 
+-uniffi = { version = "=0.31.2", features = ["cli"]}
++uniffi = { version = "=0.32.0", features = ["cli"]}
+ thiserror = "2.0.17"
+ 
+ [build-dependencies]
+-uniffi = { version = "=0.31.2", features = ["build"] }
++uniffi = { version = "=0.32.0", features = ["build"] }
+ 
+ [dev-dependencies]
+-uniffi = { version = "=0.31.2", features = ["bindgen-tests"] }
++uniffi = { version = "=0.32.0", features = ["bindgen-tests"] }
+ assert_matches = "1.5.0"
+ 
+ [profile.release-smaller]
+diff --git a/bdk-ffi/rust-toolchain.toml b/bdk-ffi/rust-toolchain.toml
+index f35f369..fb5449a 100644
+--- a/bdk-ffi/rust-toolchain.toml
++++ b/bdk-ffi/rust-toolchain.toml
+@@ -1,3 +1,3 @@
+ [toolchain]
+-channel = "1.90.0"
++channel = "1.93.0"
+ components = ["clippy", "rustfmt"]

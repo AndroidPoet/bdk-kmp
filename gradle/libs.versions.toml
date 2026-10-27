@@ -1,0 +1,13 @@
+[versions]
+kotlin = "2.4.20"
+agp = "9.4.1"
+ubique = "1.3.0"
+vanniktech = "0.30.0"
+bcv = "0.18.1"
+
+[plugins]
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+android-kmp-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
+ubique-uniffi = { id = "ch.ubique.uniffi.plugin", version.ref = "ubique" }
+vanniktech-publish = { id = "com.vanniktech.maven.publish", version.ref = "vanniktech" }
+bcv = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "bcv" }
