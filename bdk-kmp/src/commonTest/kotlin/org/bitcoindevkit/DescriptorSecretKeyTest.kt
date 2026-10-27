@@ -6,7 +6,7 @@ import kotlin.test.assertEquals
 // The expected bytes are the private keys embedded in the xprv/WIF strings published in the BIP
 // test vectors, so secretBytes() is checked against values that do not come from this library.
 class DescriptorSecretKeyTest {
-    private fun ByteArray.toHex(): String = joinToString("") { "%02x".format(it) }
+    private fun ByteArray.toHex(): String = joinToString("") { it.toUByte().toString(16).padStart(2, '0') }
 
     private val abandonMnemonic = Mnemonic.fromString(
         "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
