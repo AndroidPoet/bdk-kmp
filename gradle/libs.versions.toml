@@ -4,6 +4,13 @@ agp = "9.4.1"
 ubique = "1.3.0"
 vanniktech = "0.30.0"
 bcv = "0.18.1"
+ktor = "3.5.2"
+androidx-test-runner = "1.7.0"
+
+[libraries]
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
+androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidx-test-runner" }
 
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }

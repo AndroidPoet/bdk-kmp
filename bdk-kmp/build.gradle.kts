@@ -66,6 +66,12 @@ kotlin {
         namespace = "org.bitcoindevkit.kmp"
         compileSdk = 36
         minSdk = 24
+        // Device tests join the "test" source-set tree, so commonTest runs on the emulator too.
+        withDeviceTestBuilder {
+            sourceSetTreeName = "test"
+        }.configure {
+            instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        }
     }
 
     iosArm64()
@@ -75,6 +81,17 @@ kotlin {
     sourceSets {
         commonTest.dependencies {
             implementation(kotlin("test"))
+            // Only the regtest tests talk to bitcoind's JSON-RPC; see src/commonTest/.../regtest.
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.cio)
+        }
+        getByName("androidDeviceTest").dependencies {
+            implementation(libs.androidx.test.runner)
+        }
+        // Native libraries for the JVM platforms this machine cannot compile are dropped here by
+        // the publish workflow (linux-x86-64/, win32-x86-64/) and ride along in the jar.
+        jvmMain {
+            resources.srcDir(rootProject.layout.projectDirectory.dir("jvm-natives"))
         }
     }
 }

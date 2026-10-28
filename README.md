@@ -41,9 +41,10 @@ now also on iOS and macOS, so a Kotlin Multiplatform wallet keeps all of its Bit
 Bitcoin wallets. Until now its Kotlin packages stopped at Android and the JVM, so a Kotlin
 Multiplatform app had to write its iOS wallet layer twice, in Swift, and keep the two in step.
 
-`bdk-kmp` removes that split. One Gradle dependency gives you the full `bdk_wallet` API on every
-target your app ships to, with the Rust core compiled per platform and linked for you. Nothing to
-add to Xcode, no Swift glue, no second implementation.
+`bdk-kmp` removes that split. One Gradle dependency gives you the `bdk_wallet` API as Kotlin on
+Android, JVM desktop, iOS and macOS, with the Rust core compiled per platform and linked for you.
+Nothing to add to Xcode, no Swift glue, no second implementation. The [status table](#status) says
+exactly what is verified where.
 
 ## Install
 
@@ -131,7 +132,16 @@ wallet.persist(persister)
 
 Every call is synchronous and does real work (network, signing, SQLite). Wrap the sync and send
 paths in `withContext(Dispatchers.IO)` on JVM and Android, and `Dispatchers.Default` on Apple
-targets, exactly as you would with any blocking client.
+targets, exactly as you would with any blocking client. A few rules that follow from that:
+
+- A blocking call cannot be cancelled from Kotlin. Give long syncs their own coroutine and a
+  timeout on the client (`ElectrumClient(url, timeout = ...)`), and prefer `sync` over `fullScan`
+  once a wallet is set up.
+- One `Wallet` may be shared across threads; the Rust side serialises access. Expect callers to
+  queue behind a running sync rather than run alongside it.
+- Every handle is `Disposable`. Release it with `use { }` or `close()`; calling a released handle
+  throws `IllegalStateException` rather than touching freed memory. Values such as addresses,
+  amounts and transactions outlive the handle that produced them.
 
 ## Sync backends
 
@@ -163,6 +173,20 @@ val (client, node) = CbfBuilder()
 node.run()
 wallet.applyUpdate(client.update())
 ```
+
+### Over Tor
+
+BDK does not ship Tor; it takes a SOCKS5 proxy and leaves running Tor to the app. All three
+backends accept one, so pairing with [tor-kmp](https://github.com/AndroidPoet/tor-kmp), which runs
+Tor in-process on the same targets, needs no extra native code:
+
+```kotlin
+val esplora = EsploraClient(url, proxy = "socks5://127.0.0.1:9050")
+val electrum = ElectrumClient("ssl://host.onion:50002", socks5 = "127.0.0.1:9050")
+val cbf = CbfBuilder().socks5Proxy(Socks5Proxy(IpAddress.fromIpv4(127u, 0u, 0u, 1u), 9050u))
+```
+
+Hostnames stay hostnames, so resolution happens inside the proxy and DNS does not leak.
 
 ## Platform notes
 
@@ -240,6 +264,19 @@ JVM libraries in the jar, a Compose Multiplatform sample wallet, then proposing 
 git clone --recurse-submodules https://github.com/AndroidPoet/bdk-kmp.git
 cd bdk-kmp
 ./gradlew :bdk-kmp:jvmTest :bdk-kmp:macosArm64Test
+```
+
+The suite has two halves. The offline tests (keys, descriptors, wallets, persistence, threading,
+handle lifetimes) run everywhere. The network tests (full scan, sync, build, sign, broadcast and
+confirm over Esplora and Electrum, compact-block-filter sync, Rust-to-Kotlin sync callbacks) need
+a regtest stack and skip without one. CI runs them on Linux and on an Android emulator against
+the same container upstream `bdk-ffi` uses; to run them locally:
+
+```sh
+docker run -d -p 18443:18443 -p 18444:18444 -p 3002:3002 -p 60401:60401 \
+  ghcr.io/thunderbiscuit/podman-regtest-infinity-pro:0.4.0
+BDK_REGTEST_HOST=127.0.0.1 ./gradlew :bdk-kmp:jvmTest
+./gradlew :bdk-kmp:connectedAndroidDeviceTest   # emulator reaches the container at 10.0.2.2
 ```
 
 Requirements: JDK 17, Rust 1.93 with `rustup target add aarch64-apple-ios aarch64-apple-ios-sim`

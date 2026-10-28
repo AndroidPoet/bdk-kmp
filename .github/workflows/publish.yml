@@ -1,0 +1,137 @@
+name: publish
+
+# Builds every artifact in release mode and publishes to Maven Central. Fires when a GitHub
+# release is published (the tag, minus a leading v, becomes the version) or by hand.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish (empty = VERSION_NAME in gradle.properties)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_VERSION: 1.93.0
+
+jobs:
+  # The JVM jar carries one native library per desktop platform. macOS builds its own; the other
+  # two are built on their own OS here and dropped into jvm-natives/ before the jar is assembled.
+  jvm-natives:
+    name: JVM native library (${{ matrix.platform }})
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux-x86-64
+          - os: windows-latest
+            platform: win32-x86-64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          submodules: true
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: zulu
+          java-version: 17
+      - name: Rust toolchain
+        shell: bash
+        run: rustup toolchain install $RUST_VERSION --profile minimal
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
+        with:
+          workspaces: bdk-ffi/bdk-ffi
+          cache-directories: cargo-build
+      - uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
+      - name: Release build of the JVM jar
+        shell: bash
+        run: ./gradlew :bdk-kmp:jvmJar -PreleaseBuild=true --console=plain
+      - name: Pull the native library out of the jar
+        shell: bash
+        run: |
+          ${{ runner.os == 'Windows' && 'python' || 'python3' }} - <<'PY'
+          import glob, zipfile
+          jar = glob.glob("bdk-kmp/build/libs/bdk-kmp-jvm*.jar")[0]
+          with zipfile.ZipFile(jar) as z:
+              natives = [n for n in z.namelist() if n.endswith((".so", ".dll", ".dylib"))]
+              assert natives, "no native library in " + jar
+              for n in natives:
+                  z.extract(n, "natives")
+                  print(n)
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: jvm-native-${{ matrix.platform }}
+          path: natives/
+          if-no-files-found: error
+
+  publish:
+    name: Publish to Maven Central
+    needs: jvm-natives
+    runs-on: macos-15
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          submodules: true
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: zulu
+          java-version: 17
+      - name: Android NDK
+        run: |
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+          "$SDKMANAGER" "ndk;28.2.13676358" > /dev/null
+      - name: Rust toolchain
+        run: >-
+          rustup toolchain install $RUST_VERSION --profile minimal
+          --target aarch64-apple-ios,aarch64-apple-ios-sim,aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
+        with:
+          workspaces: bdk-ffi/bdk-ffi
+          cache-directories: cargo-build
+      - uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: jvm-native-*
+          path: jvm-natives
+          merge-multiple: true
+      - name: Resolve version
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            version="${GITHUB_REF_NAME#v}"
+          elif [ -n "${{ inputs.version }}" ]; then
+            version="${{ inputs.version }}"
+          else
+            version="$(sed -n 's/^VERSION_NAME=//p' gradle.properties)"
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          echo "Publishing $version"
+      - name: Check the API dumps and build the jar
+        run: ./gradlew :bdk-kmp:apiCheck :bdk-kmp:jvmJar -PreleaseBuild=true -PVERSION_NAME=$VERSION --console=plain
+      - name: Check what the jar ships
+        run: |
+          jar="$(ls bdk-kmp/build/libs/bdk-kmp-jvm*.jar | head -1)"
+          unzip -l "$jar" | grep -E '\.(dylib|so|dll)$'
+          for lib in darwin-aarch64/libbdkffi.dylib linux-x86-64/libbdkffi.so win32-x86-64/bdkffi.dll; do
+            unzip -l "$jar" | grep -q " $lib$" || { echo "missing $lib"; exit 1; }
+          done
+      # --no-configuration-cache: the vanniktech publish tasks are not configuration-cache safe yet.
+      - name: Publish and release
+        run: ./gradlew publishAndReleaseToMavenCentral -PreleaseBuild=true -PVERSION_NAME=$VERSION --no-configuration-cache --console=plain
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_KEY_ID }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
+      - name: List what was published
+        run: find bdk-kmp/build/outputs bdk-kmp/build/libs -maxdepth 2 \( -name '*.aar' -o -name '*.jar' -o -name '*.klib' \) | sort
