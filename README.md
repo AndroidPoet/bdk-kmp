@@ -193,7 +193,7 @@ Hostnames stay hostnames, so resolution happens inside the proxy and DNS does no
 | Target | Linking | Notes |
 | --- | --- | --- |
 | `jvm()` | dynamic library inside the jar | macOS arm64 today; other desktops on the roadmap |
-| `android` | `jniLibs` per ABI | `minSdk 24`, `compileSdk 36`; arm64-v8a, armeabi-v7a, x86_64 |
+| `android` | `jniLibs` per ABI | `minSdk 24`, `compileSdk 37`; arm64-v8a, armeabi-v7a, x86_64 |
 | `iosArm64()`, `iosSimulatorArm64()` | static library, linked into your framework | nothing to configure in Xcode |
 | `macosArm64()` | static library | |
 

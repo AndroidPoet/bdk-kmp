@@ -64,7 +64,7 @@ kotlin {
 
     android {
         namespace = "org.bitcoindevkit.kmp"
-        compileSdk = 36
+        compileSdk = 37
         minSdk = 24
         // Device tests join the "test" source-set tree, so commonTest runs on the emulator too.
         withDeviceTestBuilder {
