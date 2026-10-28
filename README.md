@@ -7,6 +7,7 @@
 <p align="center">
   <a href="https://kotlinlang.org"><img alt="Kotlin" src="https://img.shields.io/badge/Kotlin-2.4.20-7F52FF?logo=kotlin&logoColor=white"/></a>
   <a href="https://github.com/bitcoindevkit/bdk_wallet"><img alt="BDK" src="https://img.shields.io/badge/BDK-3.1.1-F7931A?logo=bitcoin&logoColor=white"/></a>
+  <a href="https://central.sonatype.com/artifact/io.github.androidpoet/bdk-kmp"><img alt="Maven Central" src="https://img.shields.io/maven-central/v/io.github.androidpoet/bdk-kmp?label=Maven%20Central&color=blue"/></a>
   <a href="https://github.com/AndroidPoet/bdk-kmp/actions/workflows/build.yml"><img alt="Build" src="https://github.com/AndroidPoet/bdk-kmp/actions/workflows/build.yml/badge.svg"/></a>
   <a href="LICENSE-MIT"><img alt="License" src="https://img.shields.io/badge/License-MIT%20or%20Apache--2.0-green.svg"/></a>
 </p>
