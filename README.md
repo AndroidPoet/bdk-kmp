@@ -1,4 +1,7 @@
-<p align="center"><b>bdk-kmp</b></p>
+<p align="center">
+  <img src="art/bdk-kmp.jpg" alt="bdk-kmp: Bitcoin Dev Kit for Kotlin Multiplatform" width="800"/>
+</p>
+
 <p align="center"><b>The Bitcoin Dev Kit for Kotlin Multiplatform.</b></p>
 
 <p align="center">
