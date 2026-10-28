@@ -47,7 +47,7 @@ Multiplatform app had to write its iOS wallet layer twice, in Swift, and keep th
 
 `bdk-kmp` removes that split. One Gradle dependency gives you the `bdk_wallet` API as Kotlin on
 Android, JVM desktop, iOS and macOS, with the Rust core compiled per platform and linked for you.
-Nothing to add to Xcode, no Swift glue, no second implementation. The [status table](#status) says
+No Swift glue, no second implementation. The [status table](#status) says
 exactly what is verified where.
 
 ## Install
@@ -205,9 +205,9 @@ property.
 
 | Target | Linking | Notes |
 | --- | --- | --- |
-| `jvm()` | dynamic library inside the jar | macOS arm64 today; other desktops on the roadmap |
+| `jvm()` | dynamic library inside the jar | ships macOS arm64, Linux x86_64 and Windows x86_64; only the first two run in CI, Windows is untested |
 | `android` | `jniLibs` per ABI | `minSdk 24`, `compileSdk 37`; arm64-v8a, armeabi-v7a, x86_64 |
-| `iosArm64()`, `iosSimulatorArm64()` | static library, linked into your framework | nothing to configure in Xcode |
+| `iosArm64()`, `iosSimulatorArm64()` | static library, linked into your framework by the Kotlin compiler | no manual Xcode step expected; not yet tried from a consumer app |
 | `macosArm64()` | static library | |
 
 **iOS.** The Rust core is a static library that the Kotlin/Native compiler links into your shared
