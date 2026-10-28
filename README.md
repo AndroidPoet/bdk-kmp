@@ -142,6 +142,9 @@ targets, exactly as you would with any blocking client. A few rules that follow 
 - Every handle is `Disposable`. Release it with `use { }` or `close()`; calling a released handle
   throws `IllegalStateException` rather than touching freed memory. Values such as addresses,
   amounts and transactions outlive the handle that produced them.
+- Released builds use upstream's `release-smaller` profile, including `panic = "abort"`: a bug
+  that panics inside the Rust core ends the process instead of surfacing as a Kotlin exception,
+  the same as `bdk-android` and `bdk-jvm`. Errors BDK expects are typed exceptions, not panics.
 
 ## Sync backends
 
@@ -176,17 +179,23 @@ wallet.applyUpdate(client.update())
 
 ### Over Tor
 
-BDK does not ship Tor; it takes a SOCKS5 proxy and leaves running Tor to the app. All three
-backends accept one, so pairing with [tor-kmp](https://github.com/AndroidPoet/tor-kmp), which runs
-Tor in-process on the same targets, needs no extra native code:
+BDK does not ship Tor; it takes a proxy and leaves running Tor to the app. Pairing with
+[tor-kmp](https://github.com/AndroidPoet/tor-kmp), which runs Tor in-process on the same targets,
+needs no extra native code, but the three backends differ in what they accept:
+
+| Backend | Proxy it accepts | Over Tor |
+| --- | --- | --- |
+| Electrum | SOCKS5 (`socks5 = "127.0.0.1:9050"`) | Yes. Hostnames, onion ones included, are resolved by the proxy. |
+| Compact block filters | SOCKS5 (`socks5Proxy(Socks5Proxy(ip, port))`) | Yes. Peer connections go through the proxy. |
+| Esplora | HTTP CONNECT only (`proxy = "http://127.0.0.1:8118"`) | Only behind an HTTP proxy that forwards to Tor. The bundled Esplora client has no SOCKS support. |
 
 ```kotlin
-val esplora = EsploraClient(url, proxy = "socks5://127.0.0.1:9050")
 val electrum = ElectrumClient("ssl://host.onion:50002", socks5 = "127.0.0.1:9050")
 val cbf = CbfBuilder().socks5Proxy(Socks5Proxy(IpAddress.fromIpv4(127u, 0u, 0u, 1u), 9050u))
 ```
 
-Hostnames stay hostnames, so resolution happens inside the proxy and DNS does not leak.
+None of this is exercised by the test suite yet; treat it as wiring, not as a verified privacy
+property.
 
 ## Platform notes
 

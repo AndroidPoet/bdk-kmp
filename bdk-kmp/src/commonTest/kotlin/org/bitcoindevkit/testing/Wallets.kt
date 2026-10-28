@@ -14,15 +14,17 @@ import org.bitcoindevkit.Wallet
 import org.bitcoindevkit.WordCount
 
 /** A wallet on a brand-new BIP-86 key, so regtest coins other tests received never show up in it. */
-internal fun freshWallet(persister: Persister = Persister.newInMemory()): Wallet {
-    val key = DescriptorSecretKey(NetworkKind.TEST, Mnemonic(WordCount.WORDS12), null)
-    return Wallet(
-        Descriptor.newBip86(key, KeychainKind.EXTERNAL, NetworkKind.TEST),
-        Descriptor.newBip86(key, KeychainKind.INTERNAL, NetworkKind.TEST),
-        Network.REGTEST,
-        persister,
-    )
+internal class FreshWallet(persister: Persister = Persister.newInMemory()) {
+    private val key = DescriptorSecretKey(NetworkKind.TEST, Mnemonic(WordCount.WORDS12), null)
+    val descriptor: Descriptor = Descriptor.newBip86(key, KeychainKind.EXTERNAL, NetworkKind.TEST)
+    val changeDescriptor: Descriptor = Descriptor.newBip86(key, KeychainKind.INTERNAL, NetworkKind.TEST)
+    val wallet: Wallet = Wallet(descriptor, changeDescriptor, Network.REGTEST, persister)
+
+    /** The same wallet opened again from what [persister] holds. */
+    fun load(persister: Persister): Wallet = Wallet.load(descriptor, changeDescriptor, persister)
 }
+
+internal fun freshWallet(): Wallet = FreshWallet().wallet
 
 /** A sync backend reduced to what the lifecycle tests need, so every test runs against each one. */
 internal sealed interface Backend {

@@ -128,6 +128,9 @@ jobs:
           else
             version="$(sed -n 's/^VERSION_NAME=//p' gradle.properties)"
           fi
+          if ! echo "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$'; then
+            echo "refusing to publish version '$version': expected MAJOR.MINOR.PATCH[-pre]"; exit 1
+          fi
           echo "VERSION=$version" >> "$GITHUB_ENV"
           echo "Publishing $version"
       - name: Check the API dumps and build the jar

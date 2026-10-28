@@ -8,7 +8,7 @@ import java.io.File
 // An emulator reaches the machine hosting it at 10.0.2.2. To run only the offline tests, pass
 // -Pandroid.testInstrumentationRunnerArguments.regtestHost=none
 internal actual fun regtestHost(): String? =
-    (InstrumentationRegistry.getArguments().getString("regtestHost") ?: "10.0.2.2").takeIf { it != "none" }
+    (InstrumentationRegistry.getArguments().getString("regtestHost") ?: "10.0.2.2").takeIf { it.isNotBlank() && it != "none" }
 
 internal actual fun temporaryDirectory(): String {
     val cache = InstrumentationRegistry.getInstrumentation().targetContext.cacheDir

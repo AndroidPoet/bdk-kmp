@@ -19,11 +19,15 @@ val applyBdkFfiPatch = tasks.register("applyBdkFfiPatch") {
     description = "Applies the UniFFI 0.32 patch to the bdk-ffi submodule if it is not applied yet."
     val submoduleDir = rootProject.layout.projectDirectory.dir("bdk-ffi").asFile
     val cargoToml = bdkFfiCrate.file("Cargo.toml").asFile
+    val toolchainToml = bdkFfiCrate.file("rust-toolchain.toml").asFile
     val patchFile = uniffiPatch.asFile
+    // Both hunks must be present; a half-applied checkout gets the patch again, and git apply
+    // refuses it loudly rather than guessing.
+    fun applied() = cargoToml.readText().contains("=0.32.0") && toolchainToml.readText().contains("1.93.0")
     inputs.file(patchFile)
-    outputs.upToDateWhen { cargoToml.readText().contains("=0.32.0") }
+    outputs.upToDateWhen { applied() }
     doLast {
-        if (!cargoToml.readText().contains("=0.32.0")) {
+        if (!applied()) {
             val exit = ProcessBuilder("git", "apply", patchFile.absolutePath)
                 .directory(submoduleDir)
                 .inheritIO()
@@ -92,6 +96,7 @@ kotlin {
         // the publish workflow (linux-x86-64/, win32-x86-64/) and ride along in the jar.
         jvmMain {
             resources.srcDir(rootProject.layout.projectDirectory.dir("jvm-natives"))
+            resources.include("**/*.so", "**/*.dll", "**/*.dylib")
         }
     }
 }

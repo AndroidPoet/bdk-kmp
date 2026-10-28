@@ -1,16 +1,19 @@
 package org.bitcoindevkit
 
 import org.bitcoindevkit.testing.Backend
+import org.bitcoindevkit.testing.FreshWallet
 import org.bitcoindevkit.testing.Regtest
 import org.bitcoindevkit.testing.awaitUntil
-import org.bitcoindevkit.testing.freshWallet
+import org.bitcoindevkit.testing.temporaryDirectory
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-// The path that moves money: receive, build, sign, broadcast, confirm, and watch the balance follow.
-// Needs the regtest stack; skips without it.
+// The path that moves money: receive, build, sign, broadcast, confirm, watch the balance follow,
+// then reopen the wallet from SQLite and find the same state. Needs the regtest stack; skips without it.
 class TransactionLifecycleTest {
     @Test
     fun spend_overEsplora_confirmsAndBalanceFollows() = spendRoundTrip { Backend.Esplora(it) }
@@ -21,7 +24,10 @@ class TransactionLifecycleTest {
     private fun spendRoundTrip(backend: (Regtest) -> Backend) {
         val regtest = Regtest.connectOrSkip() ?: return
         val client = backend(regtest)
-        val wallet = freshWallet()
+        val dbPath = temporaryDirectory() + "/wallet.sqlite3"
+        val persister = Persister.newSqlite(dbPath)
+        val fresh = FreshWallet(persister)
+        val wallet = fresh.wallet
 
         val funded = 100_000uL
         val fundingTxid = regtest.send(wallet.revealNextAddress(KeychainKind.EXTERNAL).address.toString(), 0.001)
@@ -42,6 +48,9 @@ class TransactionLifecycleTest {
         val txid = transaction.computeTxid()
         val fee = wallet.calculateFee(transaction).toSat()
         assertTrue(fee > 0uL, "fee must be positive, was $fee")
+        val paid = transaction.output().single { it.scriptPubkey.toBytes().contentEquals(recipient.scriptPubkey().toBytes()) }
+        assertEquals(sent, paid.value.toSat(), "the recipient output carries exactly the requested amount")
+        assertEquals(2, transaction.output().size, "one recipient output and one change output")
 
         client.broadcast(transaction)
         regtest.mine(1)
@@ -51,6 +60,16 @@ class TransactionLifecycleTest {
         }
 
         assertIs<ChainPosition.Confirmed>(wallet.getTx(txid)?.chainPosition)
-        assertEquals(funded - sent - fee, wallet.balance().total.toSat())
+        val remaining = funded - sent - fee
+        assertEquals(remaining, wallet.balance().total.toSat())
+
+        assertTrue(wallet.persist(persister), "a confirmed spend leaves changes to persist")
+        val reopened = fresh.load(Persister.newSqlite(dbPath))
+        assertEquals(remaining, reopened.balance().total.toSat(), "balance survives a reload from SQLite")
+        assertIs<ChainPosition.Confirmed>(assertNotNull(reopened.getTx(txid)).chainPosition)
+        assertContentEquals(
+            wallet.listUnspent().map { it.outpoint.txid.toString() + ":" + it.outpoint.vout },
+            reopened.listUnspent().map { it.outpoint.txid.toString() + ":" + it.outpoint.vout },
+        )
     }
 }

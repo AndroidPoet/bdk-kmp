@@ -14,8 +14,9 @@
 - Offline tests for SQLite persistence across reload, concurrent wallet access, and handle
   lifetimes (use after `destroy()` throws, `close()` is idempotent).
 - Android device tests share `commonTest`, so the whole suite runs on the emulator.
-- Release workflow: release-mode build of every target, JVM jar with macOS arm64, Linux x86_64
-  and Windows x86_64 libraries, API check, jar-contents check, then Maven Central.
+- Release workflow: every target built with upstream's `release-smaller` cargo profile, JVM jar
+  with macOS arm64, Linux x86_64 and Windows x86_64 libraries, API check, jar-contents check,
+  then Maven Central.
 - GitHub Actions pinned to commits.
 - Verified on CI: full suite on Linux JVM and an Android emulator against regtest; offline
   suite on macOS, iOS simulator and macOS-hosted JVM.
