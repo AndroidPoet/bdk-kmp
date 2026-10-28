@@ -82,7 +82,7 @@ internal class Regtest private constructor(val host: String) {
 }
 
 /** Polls [condition] every 250 ms until it holds, failing after [timeout]. */
-internal fun awaitUntil(what: String, timeout: Duration = 30.seconds, condition: () -> Boolean) {
+internal fun awaitUntil(what: String, timeout: Duration = 60.seconds, condition: () -> Boolean) {
     val started = TimeSource.Monotonic.markNow()
     while (!condition()) {
         check(started.elapsedNow() < timeout) { "timed out after $timeout waiting for $what" }

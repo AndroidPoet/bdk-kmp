@@ -134,4 +134,4 @@ jobs:
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
       - name: List what was published
-        run: find bdk-kmp/build/outputs bdk-kmp/build/libs -maxdepth 2 \( -name '*.aar' -o -name '*.jar' -o -name '*.klib' \) | sort
+        run: find bdk-kmp/build -maxdepth 4 \( -name '*.aar' -o -name '*.jar' -o -name '*.klib' \) -not -path '*/tmp/*' 2>/dev/null | sort || true
