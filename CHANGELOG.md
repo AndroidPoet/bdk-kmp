@@ -20,5 +20,7 @@ First release. The version follows the BDK release it wraps (`bdk_wallet` 3.1.0 
   with macOS arm64, Linux x86_64 and Windows x86_64 libraries, API check, jar-contents check,
   then Maven Central.
 - GitHub Actions pinned to commits.
+- Bindgen plugin 1.3.2, which fixes publishing of the shared native source set (its 1.3.0
+  dropped every FFI function from the commonized metadata).
 - Verified on CI: full suite on Linux JVM and an Android emulator against regtest; offline
   suite on macOS, iOS simulator and macOS-hosted JVM.

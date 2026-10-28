@@ -1893,19 +1893,6 @@ public abstract interface class org/bitcoindevkit/FeeRateInterface {
 public final class org/bitcoindevkit/FeeRateInterface$Companion {
 }
 
-public abstract class org/bitcoindevkit/FfiConverterCallbackInterface : uniffi/runtime/FfiConverter {
-	public fun <init> ()V
-	public fun allocationSize-I7RO_PI (Ljava/lang/Object;)J
-	public fun lift (J)Ljava/lang/Object;
-	public synthetic fun lift (Ljava/lang/Object;)Ljava/lang/Object;
-	public fun liftFromRustBuffer (Luniffi/runtime/RustBufferStruct$ByValue;)Ljava/lang/Object;
-	public fun lower (Ljava/lang/Object;)Ljava/lang/Long;
-	public synthetic fun lower (Ljava/lang/Object;)Ljava/lang/Object;
-	public fun lowerIntoRustBuffer (Ljava/lang/Object;)Luniffi/runtime/RustBufferStruct$ByValue;
-	public fun read-GLPrAM8 (Ljava/nio/ByteBuffer;)Ljava/lang/Object;
-	public fun write-wUAv7VE (Ljava/lang/Object;Ljava/nio/ByteBuffer;)V
-}
-
 public final class org/bitcoindevkit/FfiConverterMapSequenceUIntSequenceTypeCondition : uniffi/runtime/FfiConverterRustBuffer {
 	public static final field INSTANCE Lorg/bitcoindevkit/FfiConverterMapSequenceUIntSequenceTypeCondition;
 	public synthetic fun allocationSize-I7RO_PI (Ljava/lang/Object;)J
