@@ -245,17 +245,26 @@ vendored upstream checkout. The bump is being proposed upstream so the patch can
 
 ## Status
 
-| | |
-| --- | --- |
-| JVM (macOS arm64 host) | wallet, descriptor, key, mnemonic and error tests pass |
-| macOS arm64 | same suite passes on Kotlin/Native |
-| iOS simulator | same suite passes on CI (macOS runner) |
-| iOS device | not yet verified |
-| Android | wired up, verification in progress |
-| Maven Central | not yet published |
+Every row is backed by a CI job on `main`; nothing here is inferred.
 
-Roadmap, in order: iOS and Android verification, first Maven Central release, Linux and Windows
-JVM libraries in the jar, a Compose Multiplatform sample wallet, then proposing the project to the
+| Platform | Verified |
+| --- | --- |
+| JVM, Linux x86_64 | Full suite, network tests included, against a regtest node, Esplora and Electrum |
+| JVM, macOS arm64 | Offline suite |
+| Android (API 34 emulator, x86_64) | Full suite, network tests included, same regtest stack |
+| macOS arm64 (Kotlin/Native) | Offline suite |
+| iOS simulator (arm64) | Offline suite |
+| iOS device (arm64) | Compiles and links; not yet run on a device |
+| JVM, Windows x86_64 and Linux x86_64 libraries | Built by the publish workflow; not yet shipped |
+| Maven Central | Not yet published |
+
+The network tests cover receive, build, sign, broadcast and confirm over both Esplora and Electrum,
+compact-block-filter sync, and sync inspector callbacks. The offline suite covers keys,
+descriptors, mnemonics, wallet creation, SQLite persistence across reload, concurrent access to one
+wallet, and handle lifetimes.
+
+Roadmap, in order: first Maven Central release, a run on an iPhone, Intel macOS and Linux arm64
+libraries in the jar, a Compose Multiplatform sample wallet, then proposing the project to the
 `bitcoindevkit` organisation alongside `bdk-jvm` and `bdk-swift`.
 
 ## Build & test
