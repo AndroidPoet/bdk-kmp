@@ -37,7 +37,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Test
-        run: ./gradlew :bdk-kmp:jvmTest :bdk-kmp:macosArm64Test :bdk-kmp:iosSimulatorArm64Test --console=plain
+        run: ./gradlew :bdk-kmp:apiCheck :bdk-kmp:jvmTest :bdk-kmp:macosArm64Test :bdk-kmp:iosSimulatorArm64Test --console=plain
 
       - uses: actions/upload-artifact@v4
         if: always()
