@@ -1,0 +1,41 @@
+name: api-dump
+
+# Regenerates the API dumps on a macOS runner (the klib dump needs every Apple target compiled)
+# and uploads them. Download the artifact and commit it under bdk-kmp/api/.
+on:
+  workflow_dispatch:
+
+jobs:
+  dump:
+    name: apiDump
+    runs-on: macos-15
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: 17
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.93.0
+          targets: aarch64-apple-darwin,aarch64-apple-ios,aarch64-apple-ios-sim
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: bdk-ffi/bdk-ffi
+          cache-directories: cargo-build
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: apiDump
+        run: ./gradlew :bdk-kmp:apiDump --console=plain
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: api
+          path: bdk-kmp/api/

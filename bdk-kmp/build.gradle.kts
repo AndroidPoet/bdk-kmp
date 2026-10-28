@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.android.kmp.library)
     alias(libs.plugins.ubique.uniffi)
     alias(libs.plugins.vanniktech.publish)
+    alias(libs.plugins.bcv)
 }
 
 // ---------------------------------------------------------------------------
@@ -41,6 +42,15 @@ cargo {
 uniffi {
     generateFromLibrary {
         packageName = "org.bitcoindevkit"
+    }
+}
+
+// The Kotlin API is generated into build/ at compile time, so the committed dumps under api/
+// are the only place the public surface is visible in the repository. apiCheck runs in CI.
+@OptIn(kotlinx.validation.ExperimentalBCVApi::class)
+apiValidation {
+    klib {
+        enabled = true
     }
 }
 

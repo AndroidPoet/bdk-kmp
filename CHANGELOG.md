@@ -6,3 +6,5 @@
   iosSimulatorArm64, macosArm64 from one `org.bitcoindevkit` API.
 - Offline wallet, descriptor, key-derivation, mnemonic and error tests ported from
   `bdk-android` into `commonTest` so they run on every target.
+- Public API dumps committed under `bdk-kmp/api/` (binary-compatibility-validator) so the
+  generated surface is browsable without a build and checked in CI.

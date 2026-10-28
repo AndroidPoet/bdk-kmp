@@ -206,6 +206,15 @@ the UniFFI Kotlin Multiplatform generator, so there is no hand-written wrapper t
 On Apple targets the core is a static library pulled in through cinterop; on Android and the JVM it
 is a dynamic library loaded at runtime.
 
+### Where is the Kotlin?
+
+There is no hand-written API layer under `src/`; the whole `org.bitcoindevkit` package is generated
+into `build/` when the project compiles. To browse the public surface without building anything,
+read the committed dumps in [`bdk-kmp/api/`](bdk-kmp/api): `bdk-kmp.klib.api` lists every
+declaration in Kotlin syntax for the native targets, and `jvm/bdk-kmp.api` lists the JVM
+signatures. CI runs `./gradlew apiCheck`, so the dumps cannot drift from the generated code. After
+moving the upstream pin, run `./gradlew apiDump` and commit the result.
+
 Upstream currently pins a binding-generator version one step older than the one with
 Multiplatform support. `patches/` holds that two-line version bump and the build applies it to the
 vendored upstream checkout. The bump is being proposed upstream so the patch can go away.
@@ -242,7 +251,8 @@ Rust build output goes to `cargo-build/` at the repo root; it is large, and safe
 ## Contributing
 
 Issues and pull requests are welcome. Keep the generated API untouched (it is regenerated on every
-build) and put platform-specific fixes in the Gradle build or the patch set. All contributors are
+build) and put platform-specific fixes in the Gradle build or the patch set. If a change alters
+the public API, run `./gradlew apiDump` and commit the updated files under `bdk-kmp/api/`. All contributors are
 expected to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## License
