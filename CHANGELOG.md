@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 3.1.1 - 2026-10-28
+
+First release. The version follows the BDK release it wraps (`bdk_wallet` 3.1.0 via `bdk-ffi` v3.1.1).
 
 - First Kotlin Multiplatform build of `bdk-ffi` v3.1.1: JVM, Android, iosArm64,
   iosSimulatorArm64, macosArm64 from one `org.bitcoindevkit` API.

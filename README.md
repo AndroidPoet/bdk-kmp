@@ -51,8 +51,8 @@ exactly what is verified where.
 
 ## Install
 
-The first release is being prepared. Until it reaches Maven Central, [build from source](#build--test)
-and `publishToMavenLocal`.
+Published on Maven Central. Add it to the shared module and every target picks up its native
+library automatically:
 
 ```kotlin
 // build.gradle.kts (shared module)
@@ -267,15 +267,15 @@ Every row is backed by a CI job on `main`; nothing here is inferred.
 | macOS arm64 (Kotlin/Native) | Offline suite |
 | iOS simulator (arm64) | Offline suite |
 | iOS device (arm64) | Compiles and links; not yet run on a device |
-| JVM, Windows x86_64 and Linux x86_64 libraries | Built by the publish workflow; not yet shipped |
-| Maven Central | Not yet published |
+| JVM, Windows x86_64 and Linux x86_64 libraries | Built on their own OS by the publish workflow and shipped in the jar; not yet exercised by tests |
+| Maven Central | `io.github.androidpoet:bdk-kmp:3.1.1` |
 
 The network tests cover receive, build, sign, broadcast and confirm over both Esplora and Electrum,
 compact-block-filter sync, and sync inspector callbacks. The offline suite covers keys,
 descriptors, mnemonics, wallet creation, SQLite persistence across reload, concurrent access to one
 wallet, and handle lifetimes.
 
-Roadmap, in order: first Maven Central release, a run on an iPhone, Intel macOS and Linux arm64
+Roadmap, in order: a run on an iPhone, Intel macOS and Linux arm64
 libraries in the jar, a Compose Multiplatform sample wallet, then proposing the project to the
 `bitcoindevkit` organisation alongside `bdk-jvm` and `bdk-swift`.
 
