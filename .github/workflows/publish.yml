@@ -1,7 +1,12 @@
 name: publish
 
-# Builds every artifact in release mode and publishes to Maven Central. Fires when a GitHub
-# release is published (the tag, minus a leading v, becomes the version) or by hand.
+# Builds every artifact with upstream's release profile and publishes to Maven Central. Fires when
+# a GitHub release is published (the tag, minus a leading v, becomes the version) or by hand.
+#
+# The bindgen's own release mode cross-compiles five desktop platforms from one machine, which no
+# runner can do. Instead each OS builds its own JVM library with cargo's default profile
+# reconfigured through CARGO_PROFILE_DEV_* to match bdk-ffi's `release-smaller` profile (the one
+# bdk-android and bdk-jvm ship), so every binary below is optimised and stripped.
 on:
   release:
     types: [published]
@@ -18,6 +23,16 @@ permissions:
 env:
   CARGO_TERM_COLOR: always
   RUST_VERSION: 1.93.0
+  CARGO_PROFILE_DEV_OPT_LEVEL: z
+  CARGO_PROFILE_DEV_LTO: "true"
+  CARGO_PROFILE_DEV_CODEGEN_UNITS: "1"
+  CARGO_PROFILE_DEV_PANIC: abort
+  CARGO_PROFILE_DEV_STRIP: debuginfo
+  CARGO_PROFILE_DEV_DEBUG: "0"
+  CARGO_PROFILE_DEV_DEBUG_ASSERTIONS: "false"
+  CARGO_PROFILE_DEV_OVERFLOW_CHECKS: "false"
+  CARGO_PROFILE_DEV_INCREMENTAL: "false"
+  ANDROID_ABIS: arm64-v8a,armeabi-v7a,x86_64
 
 jobs:
   # The JVM jar carries one native library per desktop platform. macOS builds its own; the other
@@ -50,9 +65,9 @@ jobs:
           workspaces: bdk-ffi/bdk-ffi
           cache-directories: cargo-build
       - uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
-      - name: Release build of the JVM jar
+      - name: Build the JVM jar for this OS
         shell: bash
-        run: ./gradlew :bdk-kmp:jvmJar -PreleaseBuild=true --console=plain
+        run: ./gradlew :bdk-kmp:jvmJar --console=plain
       - name: Pull the native library out of the jar
         shell: bash
         run: |
@@ -76,7 +91,7 @@ jobs:
     name: Publish to Maven Central
     needs: jvm-natives
     runs-on: macos-15
-    timeout-minutes: 120
+    timeout-minutes: 240
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -116,7 +131,7 @@ jobs:
           echo "VERSION=$version" >> "$GITHUB_ENV"
           echo "Publishing $version"
       - name: Check the API dumps and build the jar
-        run: ./gradlew :bdk-kmp:apiCheck :bdk-kmp:jvmJar -PreleaseBuild=true -PVERSION_NAME=$VERSION --console=plain
+        run: ./gradlew :bdk-kmp:apiCheck :bdk-kmp:jvmJar -PandroidAbis=$ANDROID_ABIS -PVERSION_NAME=$VERSION --console=plain
       - name: Check what the jar ships
         run: |
           jar="$(ls bdk-kmp/build/libs/bdk-kmp-jvm*.jar | head -1)"
@@ -126,7 +141,7 @@ jobs:
           done
       # --no-configuration-cache: the vanniktech publish tasks are not configuration-cache safe yet.
       - name: Publish and release
-        run: ./gradlew publishAndReleaseToMavenCentral -PreleaseBuild=true -PVERSION_NAME=$VERSION --no-configuration-cache --console=plain
+        run: ./gradlew publishAndReleaseToMavenCentral -PandroidAbis=$ANDROID_ABIS -PVERSION_NAME=$VERSION --no-configuration-cache --console=plain
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
